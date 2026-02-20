@@ -176,7 +176,4 @@ Then check failed case IDs in `## Failures`:
 - Tighten quality gates as reliability improves.
 - Build dashboards from `logs/results.jsonl` and `logs/events.jsonl` for trend tracking over time.
 
-## CV bullet points
-- Built an LLM reliability harness for IT ticket triage using a hybrid architecture (LLM signal extraction + deterministic rule engine), achieving stable 100% JSON/schema validity on a golden dataset.
-- Designed regression-oriented evaluation with per-field accuracy, latency p50/p95, failure-cause taxonomy, and automated quality gates for CI-friendly pass/fail decisions.
-- Improved production readiness by canonicalizing missing-field outputs, adding targeted rule overrides/tests, and generating actionable markdown reports from JSONL run artifacts.
+
