@@ -1,0 +1,112 @@
+Metadata-Version: 2.4
+Name: llm-reliability-harness
+Version: 0.1.0
+Summary: LLM reliability and observability toolkit scaffold
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: jsonschema>=4.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Provides-Extra: rich
+Requires-Dist: rich>=13.0; extra == "rich"
+
+# llm-reliability-harness
+
+A lightweight toolkit for evaluating structured ticket extraction quality, logging run events, and generating markdown reports.
+
+## Setup
+
+### Option 1: venv
+
+```bash
+python -m venv .venv
+# Windows
+.venv\\Scripts\\activate
+# macOS/Linux
+source .venv/bin/activate
+```
+
+### Option 2: conda
+
+```bash
+conda create -n llm-harness python=3.11 -y
+conda activate llm-harness
+```
+
+Install in editable mode:
+
+```bash
+pip install -e .[dev]
+```
+
+Run tests:
+
+```bash
+pytest
+```
+
+## Dataset
+
+Default dataset path:
+
+`data/tickets_eval.jsonl`
+
+## Run Eval (Ollama)
+
+Basic run:
+
+```bash
+python -m llm_harness run \
+  --provider ollama \
+  --model qwen2.5:3b \
+  --dataset data/tickets_eval.jsonl
+```
+
+Key reliability flags:
+
+- `--num-predict` (default `320`): increase generation budget to reduce truncated JSON.
+- `--json-mode`: use Ollama JSON response mode (`format=json`) with safe fallback to schema mode if unsupported.
+- `--num-ctx`: set context window (default `2048`).
+
+Example:
+
+```bash
+python -m llm_harness run \
+  --provider ollama \
+  --model qwen2.5:3b \
+  --num-predict 384 \
+  --json-mode \
+  --out-results logs/results.jsonl \
+  --out-events logs/events.jsonl
+```
+
+## Generate Report
+
+```bash
+python -m llm_harness report \
+  --results logs/results.jsonl \
+  --events logs/events.jsonl \
+  --out reports/report.md
+```
+
+## Metrics
+
+- `json_valid_rate`: percent of rows where model output parsed into a JSON object.
+- `schema_valid_rate`: percent of rows that parsed and contained required output fields.
+- `category/priority/device/needs_clarification accuracy`: standard per-field accuracy across all rows.
+- `valid-json-only ... accuracy`: same field accuracies, but computed only on rows with `json_valid=true` and `schema_valid=true`.  
+  Use this to separate extraction-quality regressions from parse/format failures.
+- `unknown_missing_fields_rate`: rate of inferred missing fields not present in dataset-allowed field names.
+- `hallucination_rate`: internal consistency conflicts (for example clarification state vs missing fields).
+
+## Top Failure Causes
+
+The report includes counts for:
+
+- `InvalidJSON`: output could not be parsed as a JSON object.
+- `SchemaError`: JSON parsed, but required output schema fields failed.
+- `EmptyOutput`: model returned no text.
+- `ExtractionFailure`: response had extra chatter and no extractable JSON object.
+- `RuleConflict`: rule-derived inconsistencies (for example clarification/missing-fields mismatch).
+
+Use this section first to identify whether regressions come from generation format, schema adherence, or rules logic.
